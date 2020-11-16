@@ -1,0 +1,86 @@
+---
+title: "amwaj"
+output: flexdashboard::flex_dashboard
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE)
+pacman::p_load(tidyverse, shiny, amwaj)
+```
+
+```{r}
+country_choices <- 
+  h %>% 
+  select(year, country, HF.DYN.MORT,SH.DYN.MORT) %>% 
+  na.omit() %>%
+  count(country) %>% 
+  arrange(-n) %>% 
+  pull(country) %>% 
+  as.list()
+names(country_choices) <- country_choices
+
+```
+
+
+
+```{r}
+series_choices <- 
+  h %>% 
+  select(-iso2c) %>% 
+  pivot_longer(cols=where(is.double) | contains(".")) %>% 
+  filter(!is.na(value))  %>% 
+  count(name) %>% 
+    arrange(-n) %>% 
+  pull(name) %>% 
+  as.list
+names(series_choices) <- series_choices
+```
+
+
+
+Iinputs {.sidebar}
+-------------------------------------
+
+```{r, include=TRUE}
+selectizeInput('country', "Select a Series",choices = country_choices, selected = 'Peru' )
+```
+
+```{r,include=TRUE}
+selectizeInput('series1', "Select a Series",choices = series_choices, selected = series_choices[1] )
+```
+
+```{r,include=TRUE}
+selectizeInput('series2', "Select a Series",choices = series_choices, selected = series_choices[1] )
+```
+
+
+   
+Column {.tabsets}
+-------------------------------------
+    
+### Chart 1
+    
+```{r, include=TRUE}
+renderPlot({
+  h %>% 
+    filter(country == input$country) %>% 
+    ggplot(aes(x = !!sym(input$series1))) +
+    geom_density()
+})
+```
+
+### geom_point
+----------------------------------------
+    
+```{r, include=TRUE}
+renderPlot({
+  h %>% 
+    filter(country == input$country) %>% 
+    ggplot(aes(x = !!sym(input$series1), y = !!sym(input$series2))) +
+    geom_point()
+})
+```
+
+
+
